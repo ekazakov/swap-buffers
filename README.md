@@ -1,8 +1,8 @@
-= swap-buffers
+# swap-buffers
 The quickest way to swap buffers between windows.
-Based on https://github.com/dimitri/switch-window[switch-window] package.
+Based on [switch-window](https://github.com/dimitri/switch-window) package.
 
-== Install
+## Install
 ```
 (require 'swap-buffers)
 ```
