@@ -8,7 +8,7 @@ Based on [switch-window](https://github.com/dimitri/switch-window) package.
 ```
 
 
-# Usage
+## Usage
 
 Bind your favorite key to `'swap-buffers`:
 ```
@@ -31,3 +31,8 @@ Choose window for swap
 ![](https://github.com/ekazakov/swap-buffers/blob/master/screenshots/step-3.png)
 
 After
+
+
+## Bonus
+
+`swap-buffers-dired-find-file` works like `dired-find-file-other-window`, but allow to specify concrete window.
