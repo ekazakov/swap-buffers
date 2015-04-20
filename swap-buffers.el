@@ -53,6 +53,11 @@
   :type 'integer
   :group 'swap-buffers)
 
+(defcustom swap-buffers-keep-focus nil
+  "Whether to keep focus on the first window."
+  :type 'boolean
+  :group 'swap-buffers)
+
 (defun swap-buffers-enumerate ()
   "Return a list of one-letter strings to label current windows."
   (loop for w being the windows for x in swap-buffers-qwerty-shortcuts collect x))
@@ -216,14 +221,16 @@ FROM-WIN and TO-WIN -- source windows"
     (swap-buffers-other-window)))
 
 ;;;###autoload
-(defun swap-buffers (&optional keep-focus)
+(defun swap-buffers (&optional negative-keep-focus-option)
   "Swap buffer from selected window with specified buffer.
-If KEEP-FOCUS nil -- select specified window."
+If NEGATIVE-KEEP-FOCUS-OPTION is t -- use the opposite setting of swap-buffers-keep-focus."
   (interactive "P")
   (let* ((window-count (length (window-list)))
          (from-win (selected-window))
          (eobps (swap-buffers-list-eobp))
-         (to-win (swap-buffers-destination-window)))
+         (to-win (swap-buffers-destination-window))
+         (keep-focus (if negative-keep-focus-option (not swap-buffers-keep-focus)
+                       swap-buffers-keep-focus)))
 
     (if (<= window-count swap-buffers-threshold)
         (swap-buffers-swap from-win (swap-buffers-other-window))
