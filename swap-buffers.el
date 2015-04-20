@@ -33,7 +33,7 @@
   :group 'convenience)
 
 (defcustom swap-buffers-qwerty-shortcuts
-  '("a" "s" "d" "f" "j" "k" "k" ";" "w" "e" "i" "o")
+  '("a" "s" "d" "f" "j" "k" ";" "w" "e" "i" "o")
   "todo"
   :type 'list
   :group 'swap-buffers)
