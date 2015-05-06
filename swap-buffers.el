@@ -33,7 +33,7 @@
   :group 'convenience)
 
 (defcustom swap-buffers-qwerty-shortcuts
-  '("a" "s" "d" "f" "j" "k" "k" ";" "w" "e" "i" "o")
+  '("a" "s" "d" "f" "j" "k" ";" "w" "e" "i" "o")
   "todo"
   :type 'list
   :group 'swap-buffers)
@@ -51,6 +51,11 @@
 (defcustom swap-buffers-threshold 2
   "Only active after this many windows open."
   :type 'integer
+  :group 'swap-buffers)
+
+(defcustom swap-buffers-keep-focus nil
+  "Whether to keep focus on the first window."
+  :type 'boolean
   :group 'swap-buffers)
 
 (defun swap-buffers-enumerate ()
@@ -78,31 +83,14 @@ Works only with 2 windows."
           (t (error "%s" "Function works only with 2 windows.")))))
 
 (defun swap-buffers-display-number (win num)
-  "Prepare a temp buffer to diplay in the WIN window with label NUM while choosing."
+  "Create an overlay to diplay in the WIN window with label NUM while choosing."
   (let* ((label (swap-buffers-label num))
-         (buf (get-buffer-create
-               (format " *%s: %s*" label (buffer-name (window-buffer win))))))
-    (with-current-buffer buf
-      (let* ((w (window-width win))
-             (h (window-body-height win))
-             (increased-lines (/ (float h) swap-buffers-increase))
-             (scale (if (> increased-lines 1) swap-buffers-increase h))
-             (lines-before (/ increased-lines 2))
-             (margin-left (/ w h) ))
-        ;; increase to maximum swap-buffers-increase
-        (when (fboundp 'text-scale-increase)
-          (text-scale-increase scale))
-        ;; make it so that the huge number appears centered
-        (dotimes (i lines-before) (insert "\n"))
-        (dotimes (i margin-left)  (insert " "))
-        ;; insert the label, with a hack to support ancient emacs
-        (if (fboundp 'text-scale-increase)
-            (insert label)
-          (insert (propertize label 'face
-                              (list :height (* (* h swap-buffers-increase)
-                                               (if (> w h) 2 1))))))))
-    (set-window-buffer win buf)
-    buf))
+         (buffer (window-buffer win))
+         (wp (window-point win))
+         (ol (make-overlay wp wp buffer)))
+    (overlay-put ol 'before-string (propertize label 'face (list :height 4.0 :foreground "red")))
+    (overlay-put ol 'window win)
+    ol))
 
 (defun swap-buffers-list-eobp ()
   "Return a list of all the windows where `eobp' is currently
@@ -125,7 +113,7 @@ ask user for the window to select"
         (minibuffer-num nil)
         (original-cursor cursor-type)
         (eobps (swap-buffers-list-eobp))
-        key buffers
+        key overlays
         window-points
         dedicated-windows)
 
@@ -142,7 +130,7 @@ ask user for the window to select"
               (set-window-dedicated-p win nil))
             (if (minibuffer-window-active-p win)
                 (setq minibuffer-num num)
-              (push (swap-buffers-display-number win num) buffers))
+              (push (swap-buffers-display-number win num) overlays))
             (setq num (1+ num)))
 
           (while (not key)
@@ -172,7 +160,7 @@ ask user for the window to select"
       ;; restore original cursor
       (setq-default cursor-type original-cursor)
       ;; get those huge numbers away
-      (mapc 'kill-buffer buffers)
+      (mapc 'delete-overlay overlays)
       (set-window-configuration config)
       (dolist (w window-points)
         (set-window-point (car w) (cdr w)))
@@ -216,14 +204,16 @@ FROM-WIN and TO-WIN -- source windows"
     (swap-buffers-other-window)))
 
 ;;;###autoload
-(defun swap-buffers (&optional keep-focus)
+(defun swap-buffers (&optional negative-keep-focus-option)
   "Swap buffer from selected window with specified buffer.
-If KEEP-FOCUS nil -- select specified window."
+If NEGATIVE-KEEP-FOCUS-OPTION is t -- use the opposite setting of swap-buffers-keep-focus."
   (interactive "P")
   (let* ((window-count (length (window-list)))
          (from-win (selected-window))
          (eobps (swap-buffers-list-eobp))
-         (to-win (swap-buffers-destination-window)))
+         (to-win (swap-buffers-destination-window))
+         (keep-focus (if negative-keep-focus-option (not swap-buffers-keep-focus)
+                       swap-buffers-keep-focus)))
 
     (if (<= window-count swap-buffers-threshold)
         (swap-buffers-swap from-win (swap-buffers-other-window))
